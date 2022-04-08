@@ -1,24 +1,39 @@
 import pickle
-
 import librosa
-import librosa.display
-import matplotlib.pyplot as plt
 import numpy as np
+from tensorflow import keras
 
-FIG_SIZE = (5, 3)
 
-file = "./Audios/GIRL_Fear/GIRL_help_fear.wav"
+class ser:
+    def mfcc(self):
+        file = "./Audios/Dataset/1092_Help_FEA_XX.wav"
 
-signal, sample_rate = librosa.load(file, sr=22050)
+        data, sampling_rate = librosa.load(file)
+        X = []
+        mfcc_feature = np.mean(librosa.feature.mfcc(y=data, sr=sampling_rate, n_mfcc=40).T, axis=0)
+        X.append(mfcc_feature)
+        MFCCs = np.array(X)
+        return MFCCs
 
-hop_length = 512  # in num. of samples
-n_fft = 2048  # window in num. of samples
+    def ser(self):
+        emotions = {
+            '0': 'angry',
+            '1': 'disgust',
+            '2': 'fear',
+            '3': 'happy',
+            '4': 'neutral',
+            '5': 'sad'
+        }
 
-MFCCs = librosa.feature.mfcc(signal, sample_rate, n_fft=n_fft, hop_length=hop_length, n_mfcc=13)
+        with open('model.pkl', 'rb') as f:
+            model = pickle.load(f)
+        MFCCs = self.mfcc()
+        p = model.predict(MFCCs, verbose=0)
+        yhat_classes = np.argmax(p, 1)
+        output = emotions.get(str(yhat_classes[0]))
+        if output == 'fear':
+            print('Fear')
 
-with open('model.pkl', 'rb') as f:
-    model = pickle.load(f)
 
-p = model.predict(MFCCs)
-
-print(p)
+obj = ser()
+obj.ser()

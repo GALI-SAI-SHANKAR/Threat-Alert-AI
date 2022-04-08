@@ -62,7 +62,7 @@ data_copy = data
 # plt.show()
 
 def mfcc(data, sampling_rate):
-    mfcc_feature = librosa.feature.mfcc(y=data, sr=sampling_rate)
+    mfcc_feature = librosa.feature.mfcc(y=data, sr=sampling_rate )
     return np.ravel(mfcc_feature.T)
 
 
