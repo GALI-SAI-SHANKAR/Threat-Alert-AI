@@ -4,6 +4,8 @@ import pyttsx3
 import requests
 import numpy as np
 import tensorflow as tf
+import smtplib
+from email.message import EmailMessage
 
 
 class ThreatAlert:
@@ -23,8 +25,6 @@ class ThreatAlert:
                 audio_data = r.recognize_google(audio)
                 with open("audio_file.wav", "wb") as file:
                     file.write(audio.get_wav_data())
-                SER = self.SER('audio_file.wav')
-                print(SER)
             except sr.UnknownValueError:
                 print('Sorry, I did not get that')
             except sr.RequestError:
@@ -37,7 +37,7 @@ class ThreatAlert:
         mfcc_feature = np.mean(librosa.feature.mfcc(y=data, sr=sampling_rate, n_mfcc=40).T, axis=0)
         X.append(mfcc_feature)
         MFCCs = np.array(X)
-        return MFCCs
+        return MFCCs  
 
     def SER(self, audio):
         MFCCs = self.MFCCs(audio)
@@ -54,10 +54,8 @@ class ThreatAlert:
         p = model.predict(MFCCs, verbose=0)
         yhat_classes = np.argmax(p, 1)
         output = emotions.get(str(yhat_classes[0]))
-        if output == 'fear':
-            return 'Threat'
-        else:
-            return output
+
+        return output
 
     def location(self):
         # r = requests.get('https://get.geojs.io/')
@@ -84,6 +82,26 @@ class ThreatAlert:
         print('City : ', City)
         print('Region : ', Region)
         print('Country : ', Country)
+
+        msg_body = 'Longitude : '+str(Longitude)+'\nLatitude : '+str(Latitude)+'\nNetwork Provider : '+str(Organization)+'\nCity : '+str(City)+'Country : '+str(Country)
+
+        def email_alert(subject, body, to):
+            msg = EmailMessage()
+            msg.set_content(body)
+            msg['subject'] = subject
+            msg['to'] = to
+
+            user = "saimanaswi11@gmail.com"
+            msg['from'] = user
+            password = "lwuykulpblpvoiro"
+
+            server = smtplib.SMTP("smtp.gmail.com", 587)
+            server.starttls()
+            server.login(user, password)
+            server.send_message(msg)
+            server.quit()
+
+        email_alert("Threat", msg_body, "2010030054@klh.edu.in")
 
     def Alert(self):
         # Text to Speech
@@ -113,4 +131,7 @@ while True:
     print('Listening...')
     voice_data = obj.record_audio
     print(voice_data)
-    obj.Threat(voice_data)
+    SER = obj.SER('audio_file.wav')
+    print(SER)
+    if SER == 'fear' or SER == 'sad':
+        obj.Threat(voice_data)
